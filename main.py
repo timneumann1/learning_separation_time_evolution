@@ -63,11 +63,12 @@ lr_ = 0.001
 
 ################# Device ###################
 number_shots = 50
+analytical = False
 
-# for analytical results
-# dev = qml.device("default.mixed", wires=n_qubits)
-
-dev = qml.device("lightning.qubit", wires=n_qubits, shots = number_shots) # increase shots to decrease sampling error
+if analytical:
+    dev = qml.device("default.mixed", wires=n_qubits)
+else:
+    dev = qml.device("lightning.qubit", wires=n_qubits, shots = number_shots) # increase shots to decrease sampling error
 
 
 folder = f'plots/{hamiltonian_label}_{lattice_rows}x{lattice_cols}_B{B}'
@@ -87,25 +88,17 @@ H_evolution = functions.hamiltonian(hamiltonian_label, lattice_rows, lattice_col
 print(f"Time evolution {hamiltonian_label} Hamiltonian with {len(H_evolution)} terms is given by: \n {H_evolution}\n")
 
 pauli_strings = functions.kloc_pauli(n_qubits, k_local, pauli_operators) # generate Pauli strings
-#print(pauli_strings)
 
 alpha = np.array([random.uniform(-1, 1) for _ in range(len(pauli_strings))]) # Create normalized array of random coefficients from [-1,1]
 alpha = alpha / np.linalg.norm(alpha)
 
-#print([functions.pauli_observable(p) for p in pauli_strings])
-#print(np.array([functions.pauli_observable(p) for p in pauli_strings]))
-
 observable_terms = [functions.pauli_observable(p) for p in pauli_strings]
-#print(observable_terms)
-
-#observable = qml.Hamiltonian(list(alpha), observable_terms)
 
 print("\n\n ################ OBSERVABLE ###############\n\n")
 
 print(f"Number of terms: {n_qubits} choose {k_local} * 3^{k_local} = {alpha.shape[0]}\n")
 print(f"Observable Terms (first 25 terms):{observable_terms[:25]}\n")
 print(f"alpha (first 25 terms)= {alpha[:25]}\n")
-#print(f"Observable (first 5 terms): {observable[0:5]}\n")
 
 assert (scipy.special.binom(n_qubits,k_local)*3**k_local == len(observable_terms))
 
@@ -114,21 +107,22 @@ def sample_pauli_evolved_state(x_bitstring, H_evolution, trotter_time, trotter_s
     qml.BasisState(x_bitstring, wires=range(n_qubits))  # define initial state rho_x = |x⟩⟨x| 
     # Compute rho_H(x) = U rho_x U^* = e^-iHT rho_x e^iHt 
     qml.TrotterProduct(hamiltonian = H_evolution, time = trotter_time, n = trotter_steps, order = trotter_order)
-    # analytical result using density matrices
-    #return qml.density_matrix(wires = range(n_qubits))
-    return [qml.expval(p) for p in observables] # sampling error is introduced by defining the number of shots
+    if analytical:
+        return qml.density_matrix(wires = range(n_qubits)) # analytical result using density matrices
+    else:
+        return [qml.expval(p) for p in observables] # sampling error is introduced by defining the number of shots
 
 data_x = np.array([np.random.randint(0, 2, size=n_qubits) for _ in range(n_data)])
 data_pauli = np.array([np.zeros(len(observable_terms)) for _ in range(len(data_x))])
 data_y = np.zeros(data_x.shape[0])
 
 for i, string in enumerate(data_x):
-    # for analytical results
-    #rho_x = sample_pauli_evolved_state(string, H_evolution, trotter_time, trotter_steps, trotter_order) # density matrix
-    #data_pauli[i] = [np.trace(rho_x@qml.matrix(p_j, wire_order=range(n_qubits))).real for p_j in observable_terms] # we can cast to real in order to mitigate rounding errors since we know that all exp. values of Pauli strings are real
-    #data_y[i] = alpha@data_pauli[i] # compute expectation value of observable
+    if analytical:
+        rho_x = sample_pauli_evolved_state(string, H_evolution, trotter_time, trotter_steps, trotter_order) # density matrix
+        data_pauli[i] = [np.trace(rho_x@qml.matrix(p_j, wire_order=range(n_qubits))).real for p_j in observable_terms] # we can cast to real in order to mitigate rounding errors since we know that all exp. values of Pauli strings are real
+    else:
+        data_pauli[i] = sample_pauli_evolved_state(string, H_evolution, trotter_time, trotter_steps, trotter_order, observable_terms)
     
-    data_pauli[i] = sample_pauli_evolved_state(string, H_evolution, trotter_time, trotter_steps, trotter_order, observable_terms)
     data_y[i] = alpha@data_pauli[i] # compute expectation value of observable
 
 print("\n\n ################ DATA ###############\n\n")
