@@ -54,7 +54,7 @@ k_local = 3
 pauli_operators = ['X', 'Y', 'Z']
 
 ################# Data/Model ###################
-n_data = 250
+n_data = 500
 B = args.B # regularization parameter
 K = 5 # cross-validation parameter
 
@@ -62,7 +62,7 @@ n_epochs = 500 # for neural network
 lr_ = 0.001
 
 ################# Device ###################
-number_shots = 50
+number_shots = 100
 analytical = False
 
 if analytical:
@@ -138,17 +138,9 @@ print(f"Expectation values of individual Pauli operators (first data point):\n{d
 w_stars, mses = functions.lasso_training(B, data_pauli, data_y, K)
 w_star = w_stars[np.argmin(mses)] # choose any of the K values from K-fold validation
 
-zero_positions = (data_pauli == 0)  # boolean matrix: True where entry is zero
-if np.all(np.all(zero_positions == zero_positions[0, :], axis=1)):
-    mask = np.abs(data_pauli[0]) > 1e-8 # if all rows have the same nonzero indices, only include the coefficients of the nonzero Pauli strings
-else:
-    print("All terms are included now.")
-    mask = np.abs(data_pauli[0]) < np.inf # include all entries
+print(np.linalg.norm(w_star-alpha))
 
-alpha_ = alpha[mask]
-w_star_ = w_star[mask]
-
-comparison = np.vstack([w_star_[:200], alpha_[:200]])
+comparison = np.vstack([w_star[:250], alpha[:250]])
 
 plt.figure(figsize=(12, 2))
 ax = sns.heatmap(
