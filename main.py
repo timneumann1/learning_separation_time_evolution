@@ -30,7 +30,7 @@ import functions
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--hamiltonian_label", type=str, choices=['heisenberg2d', 'antiferro_XY', 'z', 'ising'], required=True)
+parser.add_argument("--hamiltonian_label", type=str, choices=['heisenberg', 'antiferro_XY', 'z', 'ising'], required=True)
 parser.add_argument("--n_qubits", type=int, required=True)
 parser.add_argument("--rows", type=int, required=True)
 parser.add_argument("--cols", type=int, required=True)
@@ -40,7 +40,7 @@ args = parser.parse_args()
 
 ################# System #######################
 hamiltonian_label = args.hamiltonian_label
-assert hamiltonian_label in ['heisenberg2d','antiferro_XY','z','ising']
+assert hamiltonian_label in ['heisenberg','antiferro_XY','ising','z']
 n_qubits = args.n_qubits
 lattice_rows, lattice_cols = args.rows, args.cols
 assert lattice_rows * lattice_cols == n_qubits
@@ -55,11 +55,11 @@ k_local = 3
 pauli_operators = ['X', 'Y', 'Z']
 
 ################# Data/Model ###################
-n_data = 500
+n_data = 2500
 B = args.B # regularization parameter
 K = 5 # cross-validation parameter
 
-n_epochs = 500 # for neural network
+n_epochs = 1000 # for neural network
 lr_ = 0.001
 
 ################# Device ###################
@@ -91,7 +91,7 @@ print(f"Time evolution {hamiltonian_label} Hamiltonian with {len(H_evolution)} t
 pauli_strings = functions.kloc_pauli(n_qubits, k_local, pauli_operators) # generate Pauli strings
 
 alpha = np.array([random.uniform(-1, 1) for _ in range(len(pauli_strings))]) # Create normalized array of random coefficients from [-1,1]
-alpha = alpha / np.linalg.norm(alpha)
+# alpha = alpha / np.linalg.norm(alpha)
 
 observable_terms = [functions.pauli_observable(p) for p in pauli_strings]
 
@@ -136,6 +136,10 @@ print(f"Expectation values of individual Pauli operators (first data point, firs
 ################ MODEL TRAINING (LASSO) ########
 ################################################
 
+print("\n\n ################ RESULTS ###############\n\n")
+
+print("### LASSO ###\n\n")
+
 w_stars, mses = functions.lasso_training(B, data_pauli, data_y, K)
 w_star = w_stars[np.argmin(mses)] # choose any of the K values from K-fold validation
 
@@ -143,7 +147,7 @@ w_star = w_stars[np.argmin(mses)] # choose any of the K values from K-fold valid
 #model.fit(data_pauli, data_y)
 #w_star = model.coef_
 
-print(f"\nNorm of w_star-alpha:{np.linalg.norm(w_star-alpha)}\n")
+print(f"Norm of w_star-alpha:{np.linalg.norm(w_star-alpha)}\n")
 
 comparison = np.vstack([w_star[:250], alpha[:250]])
 
@@ -169,7 +173,7 @@ y_pred = np.zeros(len(data_pauli))
 for i in range(len(data_pauli)):
     y_pred[i] = w_star @ data_pauli[i]
 
-print(f"\nMSE Loss of LASSO regression on entire data set: {np.mean((y_pred - data_y)**2)}\n")  
+print(f"MSE Loss of LASSO regression on entire data set: {np.mean((y_pred - data_y)**2)}\n")  
   
 comparison2 = np.vstack([y_pred[:100], data_y[:100]])
 
@@ -198,6 +202,7 @@ plt.close()
 ############## NEURAL NETWORK #####################
 ###################################################
 
+print("\n\n ### Neural Network ###\n\n")
 
 # X = torch.tensor(data_pauli, dtype=torch.float32)  # shape: (n_data, n_features)
 X = torch.tensor(data_x, dtype=torch.float32) # train neural network on raw bitstrings as input (no access to quantum data)
@@ -225,7 +230,7 @@ for epoch in range(n_epochs):  # Model Training
 with torch.no_grad():
     y_pred = model(X_test)
     mse = ((y_pred - Y_test)**2).mean()
-    print(f"\nFinal Neural Network MSE Loss on training data: {mse:.6f}")
+    print(f"\n Neural Network MSE Loss on test data: {mse:.6f}")
 
 comparison3 = np.vstack([y_pred[:100].squeeze().numpy(), Y_test[:100].squeeze().numpy()])
 

@@ -1,13 +1,13 @@
 import subprocess
 
-'''
+
 ##### B ########
 B_values = [1e-4, 1e-3, 1e-2, 1e-1]
 base_args = [
-    "--hamiltonian_label", "heisenberg2d",
-    "--n_qubits", "10",
+    "--hamiltonian_label", "heisenberg",
+    "--n_qubits", "8",
     "--rows", "2",
-    "--cols", "5"
+    "--cols", "4"
 ]
 
 for B in B_values:
@@ -15,20 +15,22 @@ for B in B_values:
     args = ["python", "main.py"] + base_args + ["--B", str(B)]
     subprocess.run(args)
 
-'''
 
+'''
 ##### Data Generation #####
 
-hamiltonian_labels = ['heisenberg2d', 'antiferro_XY', 'z', 'ising']
+hamiltonian_labels = ['heisenberg', 'antiferro_XY', 'z', 'ising']
 base_args = [
-    "--n_qubits", "12",
-    "--B", "1e-4"
+    "--B", "1e-3"
 ]
 
 for hamiltonian in hamiltonian_labels:
-    for lattice in [[2,6],[1,10]]:
+    for lattice in [[2,5],[1,10]]:
         rows = lattice[0]
         cols = lattice[1]
+        n_qubits = rows * cols
         print(f"\n=== Running with Hamiltonian = {hamiltonian} === on {rows}x{cols} lattice ===")
-        args = ["python", "main.py"] + base_args + ["--hamiltonian_label", hamiltonian] + ["--rows", str(rows)] + ["--cols", str(cols)]
+        args = ["python", "main.py"] + base_args + ["--n_qubits", n_qubits] + ["--hamiltonian_label", hamiltonian] + ["--rows", str(rows)] + ["--cols", str(cols)]
         subprocess.run(args)
+
+'''

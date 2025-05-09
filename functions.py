@@ -35,7 +35,7 @@ def hamiltonian(hamiltonian_label, lattice_rows, lattice_cols):
     
     '''
 
-    if hamiltonian_label=="heisenberg2d":    # 2D antiferromagnetic Heisenberg model
+    if hamiltonian_label=="heisenberg":    # 2D antiferromagnetic Heisenberg model
 
         heisenberg_operators = []
         heisenberg_coeffs = []
@@ -214,7 +214,7 @@ def lasso_training(B, data_pauli, data_y, K):
         mse_list.append(mse)
         w_stars.append(w_star)
 
-    print(f"\n Cross-validated MSE:{mse_list}")
+    print(f"Cross-validated MSE:{mse_list}\n ")
     print(f"Mean CV MSE:{np.mean(mse_list)}\n")
     
     return w_stars, mse_list
@@ -225,9 +225,11 @@ class PauliNN(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(input_dim, 128),
             nn.ReLU(),
-            nn.Linear(128, 64),
+            nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(64, 1)
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, 1)
         )
     def forward(self, x):
         return self.net(x)
