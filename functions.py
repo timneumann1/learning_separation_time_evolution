@@ -214,8 +214,8 @@ def lasso_training(B, data_pauli, data_y, K):
         mse_list.append(mse)
         w_stars.append(w_star)
 
-    print("Cross-validated MSE:", mse_list)
-    print("Mean CV MSE:", np.mean(mse_list))
+    print(f"\n Cross-validated MSE:{mse_list}")
+    print(f"Mean CV MSE:{np.mean(mse_list)}\n")
     
     return w_stars, mse_list
 

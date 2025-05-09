@@ -10,13 +10,14 @@ from typing import List
 import scipy.special
 import pennylane as qml
 from sklearn.linear_model import Lasso
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import KFold
+from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import seaborn as sns
 import torch 
 import torch.nn as nn
 import torch.optim as optim
-from sklearn.model_selection import KFold
-from sklearn.model_selection import train_test_split
 import argparse
 import os
 import sys
@@ -62,7 +63,7 @@ n_epochs = 500 # for neural network
 lr_ = 0.001
 
 ################# Device ###################
-number_shots = 100
+number_shots = 400
 analytical = False
 
 if analytical:
@@ -126,9 +127,9 @@ for i, string in enumerate(data_x):
     data_y[i] = alpha@data_pauli[i] # compute expectation value of observable
 
 print("\n\n ################ DATA ###############\n\n")
-print(f"x-data (first 5): {data_x[0:5]}\n")
-print(f"Expectation values of operator (first 5):\n{data_y[0:5]}\n")
-print(f"Expectation values of individual Pauli operators (first data point):\n{data_pauli[0]}\n")
+print(f"x-data (first 5): {data_x[:5]}\n")
+print(f"Expectation values of operator (first 5):\n{data_y[:5]}\n")
+print(f"Expectation values of individual Pauli operators (first data point, first 5):\n{data_pauli[0][:5]}\n")
 
 
 ################################################
@@ -138,7 +139,11 @@ print(f"Expectation values of individual Pauli operators (first data point):\n{d
 w_stars, mses = functions.lasso_training(B, data_pauli, data_y, K)
 w_star = w_stars[np.argmin(mses)] # choose any of the K values from K-fold validation
 
-print(np.linalg.norm(w_star-alpha))
+#model = LinearRegression()
+#model.fit(data_pauli, data_y)
+#w_star = model.coef_
+
+print(f"\nNorm of w_star-alpha:{np.linalg.norm(w_star-alpha)}\n")
 
 comparison = np.vstack([w_star[:250], alpha[:250]])
 
@@ -164,7 +169,7 @@ y_pred = np.zeros(len(data_pauli))
 for i in range(len(data_pauli)):
     y_pred[i] = w_star @ data_pauli[i]
 
-print(f"MSE Loss of LASSO regression on entire data set: {np.mean((y_pred - data_y)**2)}")  
+print(f"\nMSE Loss of LASSO regression on entire data set: {np.mean((y_pred - data_y)**2)}\n")  
   
 comparison2 = np.vstack([y_pred[:100], data_y[:100]])
 
@@ -220,9 +225,7 @@ for epoch in range(n_epochs):  # Model Training
 with torch.no_grad():
     y_pred = model(X_test)
     mse = ((y_pred - Y_test)**2).mean()
-    print(f"\nFinal MSE on training data: {mse:.6f}")
-
-print(f"MSE Loss of Neural Network: {((y_pred - Y_test)**2).mean()}")    
+    print(f"\nFinal Neural Network MSE Loss on training data: {mse:.6f}")
 
 comparison3 = np.vstack([y_pred[:100].squeeze().numpy(), Y_test[:100].squeeze().numpy()])
 
