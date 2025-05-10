@@ -59,7 +59,7 @@ n_data = 2500
 B = args.B # regularization parameter
 K = 5 # cross-validation parameter
 
-n_epochs = 1000 # for neural network
+n_epochs = 500 # for neural network
 lr_ = 0.001
 
 ################# Device ###################
@@ -147,9 +147,12 @@ w_star = w_stars[np.argmin(mses)] # choose any of the K values from K-fold valid
 #model.fit(data_pauli, data_y)
 #w_star = model.coef_
 
-print(f"Norm of w_star-alpha:{np.linalg.norm(w_star-alpha)}\n")
+print(f"Norm of w^*:{np.linalg.norm(w_star)}\n")
+print(f"Norm of w^*-alpha:{np.linalg.norm(w_star-alpha)}\n")
 
 comparison = np.vstack([w_star[:250], alpha[:250]])
+
+# Plots
 
 plt.figure(figsize=(12, 2))
 ax = sns.heatmap(
@@ -174,8 +177,10 @@ for i in range(len(data_pauli)):
     y_pred[i] = w_star @ data_pauli[i]
 
 print(f"MSE Loss of LASSO regression on entire data set: {np.mean((y_pred - data_y)**2)}\n")  
-  
+
 comparison2 = np.vstack([y_pred[:100], data_y[:100]])
+
+# Plots
 
 plt.figure(figsize=(12, 2))
 ax = sns.heatmap(
@@ -213,12 +218,14 @@ X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_
 model = functions.PauliNN(X_train.shape[1]) # input to the model is the dimension of the qubit system 
 optimizer = optim.Adam(model.parameters(), lr=lr_)
 loss_fn = nn.MSELoss()
+losses = []
 
 for epoch in range(n_epochs):  # Model Training
     model.train()
     optimizer.zero_grad()
     pred = model(X_train)
     loss = loss_fn(pred, Y_train)
+    losses.append(loss)
     loss.backward()
     optimizer.step()
     
@@ -231,6 +238,8 @@ with torch.no_grad():
     y_pred = model(X_test)
     mse = ((y_pred - Y_test)**2).mean()
     print(f"\n Neural Network MSE Loss on test data: {mse:.6f}")
+
+# Plots
 
 comparison3 = np.vstack([y_pred[:100].squeeze().numpy(), Y_test[:100].squeeze().numpy()])
 
@@ -252,6 +261,23 @@ ax.set_title(f"Comparison Heatmap for {hamiltonian_label} Hamiltonian on {n_qubi
 plt.tight_layout()
 
 file_name = os.path.join(folder, "plot3.png")
+plt.savefig(file_name, dpi=300)
+plt.close()
+
+loss_values = [l.item() for l in losses]
+
+plt.figure(figsize=(12, 2))
+plt.plot(loss_values, linewidth=1.5)
+
+plt.xlabel("Epoch", fontsize=12)
+plt.ylabel("MSE Loss", fontsize=12)
+plt.yscale("log")
+plt.title(f"Training Loss over Epochs for Neural Network", fontsize=14, pad=10)
+
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.tight_layout()
+
+file_name = os.path.join(folder, "loss_plot.png")
 plt.savefig(file_name, dpi=300)
 plt.close()
 
