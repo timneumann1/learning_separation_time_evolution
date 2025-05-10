@@ -201,6 +201,8 @@ def lasso_training(B, data_pauli, data_y, K):
     kf = KFold(n_splits=K, shuffle=True, random_state=42)
     mse_list = []
     w_stars = []
+    Y_tests = []
+    y_preds = []
 
     for train_idx, test_idx in kf.split(data_pauli):
         X_train, X_test = data_pauli[train_idx], data_pauli[test_idx]
@@ -213,11 +215,13 @@ def lasso_training(B, data_pauli, data_y, K):
         mse = ((y_pred - y_test) ** 2).mean()
         mse_list.append(mse)
         w_stars.append(w_star)
+        Y_tests.append(y_test)
+        y_preds.append(y_pred)
 
     print(f"Cross-validated MSE:{mse_list}\n ")
     print(f"Mean CV MSE:{np.mean(mse_list)}\n")
     
-    return w_stars, mse_list
+    return w_stars, mse_list, Y_tests, y_preds
 
 class PauliNN(nn.Module):
     def __init__(self, input_dim):

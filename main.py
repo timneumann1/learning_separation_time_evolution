@@ -34,7 +34,8 @@ parser.add_argument("--hamiltonian_label", type=str, choices=['heisenberg', 'ant
 parser.add_argument("--n_qubits", type=int, required=True)
 parser.add_argument("--rows", type=int, required=True)
 parser.add_argument("--cols", type=int, required=True)
-parser.add_argument("--B", type=float, required=True)
+parser.add_argument("--B", type=float, required=True) # We refer to B here as the B' in the paper
+parser.add_argument("--analytical", type=bool, required=False)
 
 args = parser.parse_args()
 
@@ -59,7 +60,7 @@ n_data = 2500
 B = args.B # regularization parameter
 K = 5 # cross-validation parameter
 
-n_epochs = 500 # for neural network
+n_epochs = 1500 # for neural network
 lr_ = 0.001
 
 ################# Device ###################
@@ -133,26 +134,30 @@ print(f"Expectation values of individual Pauli operators (first data point, firs
 
 
 ################################################
-################ MODEL TRAINING (LASSO) ########
+################ LASSO #########################
 ################################################
 
 print("\n\n ################ RESULTS ###############\n\n")
 
 print("### LASSO ###\n\n")
 
-w_stars, mses = functions.lasso_training(B, data_pauli, data_y, K)
-w_star = w_stars[np.argmin(mses)] # choose any of the K values from K-fold validation
+### Model Training ###
 
-#model = LinearRegression()
-#model.fit(data_pauli, data_y)
-#w_star = model.coef_
+w_stars, mses, Y_tests, y_preds = functions.lasso_training(B, data_pauli, data_y, K)
+w_star = w_stars[np.argmin(mses)] # choose best of the K values from K-fold validation
 
 print(f"Norm of w^*:{np.linalg.norm(w_star)}\n")
-print(f"Norm of w^*-alpha:{np.linalg.norm(w_star-alpha)}\n")
+print(f"Norm of w^* - alpha:{np.linalg.norm(w_star-alpha)}\n")
 
 comparison = np.vstack([w_star[:250], alpha[:250]])
 
-# Plots
+y_test = Y_tests[np.argmin(mses)]  # select data from best of the K runs in LASSO cross-validation
+y_pred = y_preds[np.argmin(mses)]
+print(f"MSE Loss of LASSO regression on entire data set: {np.mean((y_test - y_pred)**2)}\n")  
+
+comparison2 = np.vstack([y_pred[:100], y_test[:100]])
+
+### Plots ###
 
 plt.figure(figsize=(12, 2))
 ax = sns.heatmap(
@@ -170,17 +175,6 @@ plt.tight_layout()
 file_name = os.path.join(folder, "plot1.png")
 plt.savefig(file_name, dpi=300)
 plt.close()
-
-
-y_pred = np.zeros(len(data_pauli))
-for i in range(len(data_pauli)):
-    y_pred[i] = w_star @ data_pauli[i]
-
-print(f"MSE Loss of LASSO regression on entire data set: {np.mean((y_pred - data_y)**2)}\n")  
-
-comparison2 = np.vstack([y_pred[:100], data_y[:100]])
-
-# Plots
 
 plt.figure(figsize=(12, 2))
 ax = sns.heatmap(
@@ -209,7 +203,6 @@ plt.close()
 
 print("\n\n ### Neural Network ###\n\n")
 
-# X = torch.tensor(data_pauli, dtype=torch.float32)  # shape: (n_data, n_features)
 X = torch.tensor(data_x, dtype=torch.float32) # train neural network on raw bitstrings as input (no access to quantum data)
 Y = torch.tensor(data_y, dtype=torch.float32).view(-1, 1) # Define ground truth comparable to LASSO model
 
@@ -232,16 +225,16 @@ for epoch in range(n_epochs):  # Model Training
     if epoch % 50 == 0:
         print(f"Epoch {epoch}: Loss = {loss.item():.6f}")
 
-# Model Prediction
+### Model Prediction ###
 
 with torch.no_grad():
     y_pred = model(X_test)
     mse = ((y_pred - Y_test)**2).mean()
     print(f"\n Neural Network MSE Loss on test data: {mse:.6f}")
 
-# Plots
-
 comparison3 = np.vstack([y_pred[:100].squeeze().numpy(), Y_test[:100].squeeze().numpy()])
+
+### Plots ###
 
 plt.figure(figsize=(12, 2))
 ax = sns.heatmap(
