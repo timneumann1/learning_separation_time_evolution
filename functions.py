@@ -200,6 +200,7 @@ def lasso_training(B, data_pauli, data_y, K):
 
     kf = KFold(n_splits=K, shuffle=True, random_state=42)
     mse_list = []
+    mse_trains = []
     w_stars = []
     Y_tests = []
     y_preds = []
@@ -207,12 +208,18 @@ def lasso_training(B, data_pauli, data_y, K):
     for train_idx, test_idx in kf.split(data_pauli):
         X_train, X_test = data_pauli[train_idx], data_pauli[test_idx]
         y_train, y_test = data_y[train_idx], data_y[test_idx]
-    
-        model = Lasso(alpha=B, fit_intercept=False, max_iter=10000)
+        if B == 0: 
+            model = LinearRegression(fit_intercept=False)
+        else:
+            model = Lasso(alpha=B, fit_intercept=False, max_iter=100000)
         model.fit(X_train, y_train)
         w_star = model.coef_
+        y_pred_train = model.predict(X_train)
+        mse_train = ((y_pred_train - y_train) ** 2).mean()
         y_pred = model.predict(X_test)
         mse = ((y_pred - y_test) ** 2).mean()
+        
+        mse_trains.append(mse_train)
         mse_list.append(mse)
         w_stars.append(w_star)
         Y_tests.append(y_test)
@@ -221,7 +228,7 @@ def lasso_training(B, data_pauli, data_y, K):
     print(f"Cross-validated MSE:{mse_list}\n ")
     print(f"Mean CV MSE:{np.mean(mse_list)}\n")
     
-    return w_stars, mse_list, Y_tests, y_preds
+    return w_stars, mse_list, mse_trains, Y_tests, y_preds
 
 class PauliNN(nn.Module):
     def __init__(self, input_dim):
@@ -229,10 +236,13 @@ class PauliNN(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(input_dim, 128),
             nn.ReLU(),
+            nn.Dropout(0.1),
             nn.Linear(128, 128),
             nn.ReLU(),
+            nn.Dropout(0.1),
             nn.Linear(128, 128),
             nn.ReLU(),
+            nn.Dropout(0.1),
             nn.Linear(128, 1)
         )
     def forward(self, x):

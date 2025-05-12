@@ -5,29 +5,28 @@ import subprocess
 
 # NOTE: The hyperparameter B here refers to the hyperparameter B' in the report
 
-B_values = [0, 1e-6, 1e-4, 1e-2]
+B_values = [0, 1e-7, 1e-4, 1e-1]
 base_args = [
     "--hamiltonian_label", "heisenberg",
-    "--n_qubits", "4",
+    "--n_qubits", "10",
     "--rows", "2",
-    "--cols", "2"
+    "--cols", "5"
 ]
 
 for B in B_values:
     print(f"\n=== Running with B = {B} ===")
-    args = ["python", "main.py"] + base_args + ["--B", str(B)] + ["--analytical", str(True)]
+    args = ["python", "main.py"] + base_args + ["--B", str(B)] 
     print(args)
     subprocess.run(args)
-
 
 ##### Analytical ########
 print(f"\n=== Running with analytic=True ===")
 
 base_args = [
     "--hamiltonian_label", "heisenberg",
-    "--n_qubits", "10",
+    "--n_qubits", "6",
     "--rows", "2",
-    "--cols", "5",
+    "--cols", "3",
     "--B", "1e-4"
 ]
 
