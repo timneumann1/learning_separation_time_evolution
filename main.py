@@ -58,7 +58,7 @@ pauli_operators = ['X', 'Y', 'Z']
 ################# Data/Model ###################
 
 B = args.B # regularization parameter
-n_data = 4500 if B == 0 else 2500 # create an overdetermined system for LR reference, otherwise create overparameterized system for regularized LASSO
+n_data = 4500 # create an overdetermined system for LR and LASSO, since number of observables is poly, hence, data generation is efficient quantumly
 K = 5 # cross-validation parameter
 
 n_epochs = 2000 # for neural network
@@ -157,6 +157,8 @@ comparison = np.vstack([w_star[:250], alpha[:250]])
 y_test = Y_tests[np.argmin(mses)]  # select data from best of the K runs in LASSO cross-validation
 y_pred = y_preds[np.argmin(mses)]
 print(f"MSE Loss of LASSO regression on entire data set: {np.mean((y_test - y_pred)**2)}\n")  
+
+print(f"Relative absolute error compared to ground truth range: {np.sqrt(np.argmin(mses))} vs. {np.min(y_test)}-{np.max(y_test)}")
 
 comparison2 = np.vstack([y_pred[:100], y_test[:100]])
 

@@ -5,14 +5,14 @@ import random
 from typing import List
 import scipy.special
 import pennylane as qml
-from sklearn.linear_model import Lasso
-from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 import seaborn as sns
 import torch 
 import torch.nn as nn
 import torch.optim as optim
+from sklearn.linear_model import Lasso, LinearRegression
 from sklearn.model_selection import KFold
+from sklearn.metrics import r2_score
 
 
 def hamiltonian(hamiltonian_label, lattice_rows, lattice_cols):
@@ -200,6 +200,7 @@ def lasso_training(B, data_pauli, data_y, K):
 
     kf = KFold(n_splits=K, shuffle=True, random_state=42)
     mse_list = []
+    r2_scores = []
     mse_trains = []
     w_stars = []
     Y_tests = []
@@ -218,15 +219,20 @@ def lasso_training(B, data_pauli, data_y, K):
         mse_train = ((y_pred_train - y_train) ** 2).mean()
         y_pred = model.predict(X_test)
         mse = ((y_pred - y_test) ** 2).mean()
-        
-        mse_trains.append(mse_train)
+        r2 = r2_score(y_test, y_pred)
+
         mse_list.append(mse)
+        r2_scores.append(r2)        
+        mse_trains.append(mse_train)
         w_stars.append(w_star)
         Y_tests.append(y_test)
         y_preds.append(y_pred)
 
     print(f"Cross-validated MSE:{mse_list}\n ")
     print(f"Mean CV MSE:{np.mean(mse_list)}\n")
+    
+    print(f"Cross-validated R^2 Scores:{r2_scores}\n ")
+    print(f"Mean R^2 score:{np.mean(r2_scores)}\n")
     
     return w_stars, mse_list, mse_trains, Y_tests, y_preds
 
