@@ -56,8 +56,6 @@ MSE loss of LASSO training: 2.0640601476165513e-06
 
 |w^* - alpha| = 0.37630567737662307
 
-MSE Loss of LASSO regression on entire data set: 0.0004054995386557186
-
 
 
  ### Neural Network ###

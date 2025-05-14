@@ -62,8 +62,6 @@ MSE loss of LASSO training: 1.150525145191702e-05
 
 |w^* - alpha| = 0.6096164494557228
 
-MSE Loss of LASSO regression on entire data set: 0.000926225873631633
-
 Relative absolute error compared to ground truth range: 0.00304 over [-18.687439983119706, 21.22566363841775]
 
 
