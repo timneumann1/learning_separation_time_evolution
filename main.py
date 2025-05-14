@@ -158,7 +158,7 @@ y_test = Y_tests[np.argmin(mses)]  # select data from best of the K runs in LASS
 y_pred = y_preds[np.argmin(mses)]
 print(f"MSE Loss of LASSO regression on entire data set: {np.mean((y_test - y_pred)**2)}\n")  
 
-print(f"Relative absolute error compared to ground truth range: {np.sqrt(np.argmin(mses))} vs. {np.min(y_test)}-{np.max(y_test)}")
+print(f"Relative absolute error compared to ground truth range: {np.sqrt(np.min(mses)):.5f} over [{np.min(y_test):.5f}, {np.max(y_test):.5f}]")
 
 comparison2 = np.vstack([y_pred[:100], y_test[:100]])
 

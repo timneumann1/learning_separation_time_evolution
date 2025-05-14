@@ -19,7 +19,7 @@ for B in B_values:
     print(args)
     subprocess.run(args)
 
-'''
+
 ##### Analytical ########
 print(f"\n=== Running with analytic=True ===")
 
@@ -34,9 +34,10 @@ base_args = [
 args = ["python", "main.py"] + base_args + ["--analytical", str(True)]
 subprocess.run(args)
 
+
 ##### Data Generation #####
 
-hamiltonian_labels = ['antiferro_XY', 'z', 'ising']
+hamiltonian_labels = ['heisenberg', 'antiferro_XY', 'z', 'ising']
 base_args = [
     "--n_qubits", "10",
     "--rows", "2",
@@ -45,7 +46,7 @@ base_args = [
 ]
 
 for hamiltonian in hamiltonian_labels:
-    print(f"\n=== Running with Hamiltonian = {hamiltonian} === on {rows}x{cols} lattice ===")
+    print(f"\n=== Running with Hamiltonian = {hamiltonian} ======")
     args = ["python", "main.py"] + base_args + ["--hamiltonian_label", hamiltonian]
+    print(args)
     subprocess.run(args)
-'''
