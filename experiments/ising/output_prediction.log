@@ -1,0 +1,58 @@
+
+
+ ################ RESULTS ###############
+
+
+### LASSO ###
+
+
+Cross-validated MSE:[np.float64(0.00131699621270815), np.float64(0.0012338388339687577), np.float64(0.0014659628117744932), np.float64(0.0014242262648210624), np.float64(0.0009185764066181556)]
+ 
+Mean CV MSE:0.0012719201059781238
+
+Cross-validated R^2 Scores:[0.9999713623116435, 0.9999702759242141, 0.9999659307756195, 0.9999675662612273, 0.9999790160437358]
+ 
+Mean R^2 score:0.999970830263288
+
+MSE loss of LASSO training: 1.1342327298689198e-05
+
+|w^*| = 33.123305354046046
+
+|w^* - alpha| = 0.6177049147043743
+
+MSE Loss of LASSO regression on test data set: 4
+
+Relative absolute error compared to ground truth range: 0.03031 over [-19.03029, 22.44687]
+
+
+ ### Neural Network ###
+
+
+Epoch 0: Loss = 43.074165
+Epoch 200: Loss = 6.946311
+Epoch 400: Loss = 5.929119
+Epoch 600: Loss = 5.690319
+Epoch 800: Loss = 5.667575
+Epoch 1000: Loss = 5.845291
+Epoch 1200: Loss = 5.680852
+Epoch 1400: Loss = 5.818270
+Epoch 1600: Loss = 5.761766
+Epoch 1800: Loss = 5.544733
+Epoch 2000: Loss = 5.712581
+Epoch 2200: Loss = 5.929221
+Epoch 2400: Loss = 5.650956
+Epoch 2600: Loss = 5.589948
+Epoch 2800: Loss = 5.906730
+Epoch 3000: Loss = 5.534809
+Epoch 3200: Loss = 5.616401
+Epoch 3400: Loss = 5.606081
+Epoch 3600: Loss = 5.596759
+Epoch 3800: Loss = 5.581389
+Epoch 4000: Loss = 5.837793
+Epoch 4200: Loss = 5.526510
+Epoch 4400: Loss = 5.889577
+Epoch 4600: Loss = 5.665193
+Epoch 4800: Loss = 5.813102
+Neural Network MSE Loss on test data: 6.343885
+R^2 score of Neural Network:0.862054105996702
+
