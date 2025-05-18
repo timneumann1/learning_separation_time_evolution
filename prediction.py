@@ -3,11 +3,7 @@
 ################################################
 
 import numpy as np
-import scipy
-import itertools
 import random
-from typing import List
-import scipy.special
 import pennylane as qml
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import LinearRegression

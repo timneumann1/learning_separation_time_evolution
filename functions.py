@@ -1,19 +1,8 @@
 import numpy as np
 import scipy
 import itertools
-import random
-from typing import List
 import scipy.special
 import pennylane as qml
-import matplotlib.pyplot as plt
-import seaborn as sns
-import torch 
-import torch.nn as nn
-import torch.optim as optim
-from sklearn.linear_model import Lasso, LinearRegression
-from sklearn.model_selection import KFold
-from sklearn.metrics import r2_score
-
 
 def hamiltonian(hamiltonian_label, lattice_rows, lattice_cols):
     '''This function returns the Hamiltonian corresponding 

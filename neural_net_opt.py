@@ -3,15 +3,7 @@
 ################################################
 
 import numpy as np
-import scipy
-import itertools
 import random
-from typing import List
-import scipy.special
-import pennylane as qml
-from sklearn.linear_model import Lasso
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import KFold
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score 
 import matplotlib.pyplot as plt
@@ -70,7 +62,7 @@ with open(f"experiments/{hamiltonian_label}/data_alpha.pkl", "rb") as f:
 n_epochs = 5000
 weight_decay = 1e-5
 patience = 500
-
+    
 class PauliNN(nn.Module):
     def __init__(self, input_dim):
         super().__init__()
