@@ -24,8 +24,6 @@ import os
 import sys
 import pickle
 
-import functions
-
 ################################################
 ################# PARAMETERS ###################
 ################################################
@@ -48,11 +46,6 @@ assert hamiltonian_label in ['heisenberg','antiferro_XY','ising','z']
 n_qubits = args.n_qubits
 B = args.B # regularization parameter
 n_data = 4500 # create an overdetermined system for LR and LASSO, since number of observables is poly, hence, data generation is efficient quantumly
-K = 5 # cross-validation parameter
-
-n_epochs = 5000 # for neural network
-lr_ = 0.001
-weight_decay = 1e-5
 
 folder = f'experiments/{hamiltonian_label}'
 os.makedirs(folder, exist_ok=True)
@@ -82,13 +75,77 @@ with open(f"{folder}/data_alpha.pkl", "rb") as f:
 ################ LASSO #########################
 ################################################
 
+### Parameter ###
+K = 5 # cross-validation parameter
+
+
+def lasso_training(B, data_pauli, data_y, K):
+    '''
+    Lasso regression with regularization parameter B to find w with small weight such that w * data_pauli(data_x) = data_y(data_x)
+
+        
+    Inputs:
+    _________________
+    B: int
+        hyperparameter for Lasso regularization (coefficient of penalty term)
+    data_pauli: 2d np.array
+        Contains the (unweighted) Pauli string expectation values for each evolved state in the training data
+    data_y: np.array
+        Contains the observable expectation values
+    K: int
+        Parameter for K-fold validation
+        
+    Returns: 
+    _________________
+    w_star: np.array
+        Array of coefficients approximating coefficient vector alpha sparsely
+    '''
+
+    kf = KFold(n_splits=K, shuffle=True, random_state=42)
+    mse_list = []
+    r2_scores = []
+    mse_trains = []
+    w_stars = []
+    Y_tests = []
+    y_preds = []
+
+    for train_idx, test_idx in kf.split(data_pauli):
+        X_train, X_test = data_pauli[train_idx], data_pauli[test_idx]
+        y_train, y_test = data_y[train_idx], data_y[test_idx]
+        if B == 0: 
+            model = LinearRegression(fit_intercept=False)
+        else:
+            model = Lasso(alpha=B, fit_intercept=False, max_iter=100000)
+        model.fit(X_train, y_train)
+        w_star = model.coef_
+        y_pred_train = model.predict(X_train)
+        mse_train = ((y_pred_train - y_train) ** 2).mean()
+        y_pred = model.predict(X_test)
+        mse = ((y_pred - y_test) ** 2).mean()
+        r2 = r2_score(y_test, y_pred)
+
+        mse_list.append(mse)
+        r2_scores.append(r2)        
+        mse_trains.append(mse_train)
+        w_stars.append(w_star)
+        Y_tests.append(y_test)
+        y_preds.append(y_pred)
+
+    print(f"Cross-validated MSE:{mse_list}\n ")
+    print(f"Mean CV MSE:{np.mean(mse_list)}\n")
+    
+    print(f"Cross-validated R^2 Scores:{r2_scores}\n ")
+    print(f"Mean R^2 score:{np.mean(r2_scores)}\n")
+    
+    return w_stars, mse_list, mse_trains, Y_tests, y_preds
+
 print("\n\n ################ RESULTS ###############\n\n")
 
 print("### LASSO ###\n\n")
 
 ### Model Training ###
 
-w_stars, mses, mse_trains, Y_tests, y_preds = functions.lasso_training(B, data_pauli, data_y, K)
+w_stars, mses, mse_trains, Y_tests, y_preds = lasso_training(B, data_pauli, data_y, K)
 w_star = w_stars[np.argmin(mses)] # choose best of the K values from K-fold validation
 
 print(f"MSE loss of LASSO training: {mse_trains[np.argmin(mses)]}\n")
@@ -149,6 +206,31 @@ plt.close()
 ############## NEURAL NETWORK #####################
 ###################################################
 
+### Parameters ###
+
+n_epochs = 5000
+lr_ = 0.001
+weight_decay = 1e-5
+
+class PauliNN(nn.Module):
+    def __init__(self, input_dim):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(input_dim, 256),
+            nn.LeakyReLU(0.01),
+            nn.Dropout(0.1),
+            nn.Linear(256, 128),
+            nn.LeakyReLU(0.01),
+            nn.Dropout(0.1),
+            nn.Linear(128, 64),
+            nn.LeakyReLU(0.01),
+            nn.Dropout(0.1),
+            nn.Linear(64, 1)
+        )
+    def forward(self, x):
+        return self.net(x)
+
+
 print("\n\n ### Neural Network ###\n\n")
 
 X = torch.tensor(data_x, dtype=torch.float32) # train neural network on raw bitstrings as input (no access to quantum data)
@@ -156,7 +238,7 @@ Y = torch.tensor(data_y, dtype=torch.float32).view(-1, 1) # Define ground truth 
 
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
-model = functions.PauliNN(X_train.shape[1]) # input to the model is the dimension of the qubit system 
+model = PauliNN(X_train.shape[1]) # input to the model is the dimension of the qubit system 
 optimizer = optim.Adam(model.parameters(), lr=lr_ , weight_decay=weight_decay)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.5)
 
