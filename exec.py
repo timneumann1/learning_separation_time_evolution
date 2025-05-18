@@ -1,6 +1,5 @@
+'''This file is used to execute the main experiment, consisting of generating quantum data and predicting expectation values.'''
 import subprocess
-
-##### Data Generation #####
 
 hamiltonian_labels = ['heisenberg', 'antiferro_XY', 'z', 'ising']
 base_args = [
@@ -9,6 +8,8 @@ base_args = [
     "--cols", "5",
     "--B", "1e-6" # optimal regularization parameter
 ]
+
+##### Data Generation & Prediction #####
 
 for hamiltonian in hamiltonian_labels:
     print(f"\n=== Generating data for {hamiltonian} Hamiltonian ======")

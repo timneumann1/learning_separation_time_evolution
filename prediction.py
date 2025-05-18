@@ -1,9 +1,10 @@
+'''This file implements the training and prediction workflow for the classical and quantum learner.'''
+
 ################################################
 ################# IMPORTS ######################
 ################################################
 
 import numpy as np
-import random
 import pennylane as qml
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import LinearRegression
@@ -41,7 +42,7 @@ hamiltonian_label = args.hamiltonian_label
 assert hamiltonian_label in ['heisenberg','antiferro_XY','ising','z']
 n_qubits = args.n_qubits
 B = args.B # regularization parameter
-n_data = 4500 # create an overdetermined system for LR and LASSO, since number of observables is poly, hence, data generation is efficient quantumly
+n_data = 4500 # create an overdetermined system for LR and LASSO, since number of observables is polynomial in number of qubits (hence, data generation is efficient quantumly)
 
 folder = f'experiments/{hamiltonian_label}'
 os.makedirs(folder, exist_ok=True)
@@ -71,9 +72,7 @@ with open(f"{folder}/data_alpha.pkl", "rb") as f:
 ################ LASSO #########################
 ################################################
 
-### Parameter ###
 K = 5 # cross-validation parameter
-
 
 def lasso_training(B, data_pauli, data_y, K):
     '''
@@ -97,6 +96,7 @@ def lasso_training(B, data_pauli, data_y, K):
         Array of coefficients approximating coefficient vector alpha sparsely
     '''
 
+    # perform k-fold cross-validation on quantumly generated data
     kf = KFold(n_splits=K, shuffle=True, random_state=42)
     mse_list = []
     r2_scores = []
@@ -203,11 +203,11 @@ plt.close()
 ###################################################
 
 ### Parameters ###
-
 n_epochs = 5000
 lr_ = 0.001
 weight_decay = 1e-5
 
+# neural network architecture
 class PauliNN(nn.Module):
     def __init__(self, input_dim):
         super().__init__()
@@ -226,22 +226,23 @@ class PauliNN(nn.Module):
     def forward(self, x):
         return self.net(x)
 
-
 print("\n\n ### Neural Network ###\n\n")
 
 X = torch.tensor(data_x, dtype=torch.float32) # train neural network on raw bitstrings as input (no access to quantum data)
 Y = torch.tensor(data_y, dtype=torch.float32).view(-1, 1) # Define ground truth comparable to LASSO model
 
+# Define training and test data
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
-model = PauliNN(X_train.shape[1]) # input to the model is the dimension of the qubit system 
+model = PauliNN(X_train.shape[1]) # input to the model is the dimension of the qubit system (size of bitstring)
 optimizer = optim.Adam(model.parameters(), lr=lr_ , weight_decay=weight_decay)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.5)
 
 loss_fn = nn.MSELoss()
 losses = []
 
-for epoch in range(n_epochs):  # Model Training
+# Model Training
+for epoch in range(n_epochs):  
     model.train()
     optimizer.zero_grad()
     pred = model(X_train)

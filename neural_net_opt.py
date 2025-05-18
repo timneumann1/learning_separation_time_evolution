@@ -1,3 +1,5 @@
+'''This file explores a hyperparameter optimization of the neural network.'''
+
 ################################################
 ################# IMPORTS ######################
 ################################################
@@ -63,6 +65,7 @@ n_epochs = 5000
 weight_decay = 1e-5
 patience = 500
     
+# neural network architecture
 class PauliNN(nn.Module):
     def __init__(self, input_dim):
         super().__init__()
@@ -82,14 +85,31 @@ class PauliNN(nn.Module):
         return self.net(x)
 
 def model_run(lr_, batch_size):
+    '''
+    This function performs the hyperparameter optimization.
+    
+    Inputs:
+    _________________
+    lr_: float
+        Learning rate of the neural network
+    batch_size: int
+        Number of samples per batch to be trained
+   
+    Returns: 
+    -
+    
+    '''
+    
     X = torch.tensor(data_x, dtype=torch.float32) # train neural network on raw bitstrings as input (no access to quantum data)
     Y = torch.tensor(data_y, dtype=torch.float32).view(-1, 1) # Define ground truth comparable to LASSO model
 
+    # Create training and test data
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
     train_dataset = torch.utils.data.TensorDataset(X_train, Y_train)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
+    # Define model
     model = PauliNN(X_train.shape[1]) # input to the model is the dimension of the qubit system 
     optimizer = optim.Adam(model.parameters(), lr=lr_ , weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.5)
@@ -100,7 +120,8 @@ def model_run(lr_, batch_size):
     counter = 0
     best_loss = np.inf
 
-    for epoch in range(n_epochs):  # Model Training
+    # Model Training
+    for epoch in range(n_epochs):  
         model.train()
         for x_batch, y_batch in train_loader:
             optimizer.zero_grad()
@@ -123,8 +144,8 @@ def model_run(lr_, batch_size):
             if counter > patience:
                 print("Early stopping")
                 break
-    ### Model Prediction ###
-
+            
+    # Model Prediction 
     model.load_state_dict(torch.load(f"experiments/opt/{hamiltonian_label}/best_model.pt"))
 
     with torch.no_grad():
@@ -137,7 +158,7 @@ def model_run(lr_, batch_size):
 
     comparison3 = np.vstack([y_pred[:100].squeeze().numpy(), Y_test[:100].squeeze().numpy()])
 
-    ### Plots ###
+    # Plotting of results
 
     plt.figure(figsize=(12, 2))
     ax = sns.heatmap(
@@ -175,6 +196,7 @@ def model_run(lr_, batch_size):
     plt.savefig(file_name, dpi=300)
     plt.close()
     
+# Grid search for hyperparameter optimization
 for lr_ in [1e-4, 1e-3,1e-2, 1e-1]:
     for batch_size in [32,128,512,3240]:
         model_run(lr_, batch_size)

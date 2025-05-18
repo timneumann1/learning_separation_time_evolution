@@ -1,3 +1,4 @@
+'''This file implements the data generation workflow.'''
 ################################################
 ################# IMPORTS ######################
 ################################################
@@ -45,7 +46,6 @@ trotter_time = 1.0
 k_local = 3
 pauli_operators = ['X', 'Y', 'Z']
 
-
 ################# Device ###################
 number_shots = 400
 analytic = args.analytical is not None
@@ -89,6 +89,7 @@ print(f"alpha (first 25 terms)= {alpha[:25]}\n")
 
 assert (scipy.special.binom(n_qubits,k_local)*3**k_local == len(observable_terms))
 
+# Perform Trotterization to generate data
 @qml.qnode(dev)
 def sample_pauli_evolved_state(x_bitstring, H_evolution, trotter_time, trotter_steps, trotter_order, observables = None):
     qml.BasisState(x_bitstring, wires=range(n_qubits))  # define initial state rho_x = |x⟩⟨x| 
@@ -99,9 +100,9 @@ def sample_pauli_evolved_state(x_bitstring, H_evolution, trotter_time, trotter_s
     else:
         return [qml.expval(p) for p in observables] # sampling error is introduced by defining the number of shots
 
-data_x = np.array([np.random.randint(0, 2, size=n_qubits) for _ in range(n_data)])
-data_pauli = np.array([np.zeros(len(observable_terms)) for _ in range(len(data_x))])
-data_y = np.zeros(data_x.shape[0])
+data_x = np.array([np.random.randint(0, 2, size=n_qubits) for _ in range(n_data)]) # to be provided to classical learner
+data_pauli = np.array([np.zeros(len(observable_terms)) for _ in range(len(data_x))]) # to be provided to quantum learner
+data_y = np.zeros(data_x.shape[0]) # ground truth expectation values
 
 for i, string in enumerate(data_x):
     if analytic:
@@ -117,6 +118,7 @@ print(f"x-data (first 5): {data_x[:5]}\n")
 print(f"Expectation values of operator (first 5):\n{data_y[:5]}\n")
 print(f"Expectation values of individual Pauli operators (first data point, first 5):\n{data_pauli[0][:5]}\n")
 
+# Save files for access in prediction workflow
 data_classical = {'data_x': data_x, 'data_y': data_y}
 with open(f"{folder}/data_classical.pkl", "wb") as f:
     pickle.dump(data_classical, f)

@@ -1,3 +1,5 @@
+'''This file contains functions that enable the data generation and prediction workflow.'''
+
 import numpy as np
 import scipy
 import itertools
@@ -128,7 +130,6 @@ def kloc_pauli(n_qubits, k_local, pauli_operators):
     pauli_strings = np.full(int(scipy.special.binom(n_qubits,k_local)*3**k_local),'', dtype=f'<U{n_qubits}')
     # All combinations of k_local qubit positions
     positions = list(itertools.combinations(range(n_qubits), k_local))
-    #print(len(pauli_strings),len(positions))
     assert len(pauli_strings) == 3**k_local*len(positions)
     # All combinations of Pauli operators on these positions
     pauli_idx = 0
@@ -137,7 +138,7 @@ def kloc_pauli(n_qubits, k_local, pauli_operators):
             pauli_op = ['I'] * n_qubits
             for idx, qubit in enumerate(pos):
                 pauli_op[qubit] = ops[idx]
-            pauli_strings[pauli_idx]=''.join(pauli_op) #3**k_local*i+j
+            pauli_strings[pauli_idx]=''.join(pauli_op)
             pauli_idx +=1
     return pauli_strings
 
